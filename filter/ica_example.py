@@ -23,40 +23,38 @@ A = np.array([[0.5, 1, 0.2],
 X = S.dot(A).T
 
 # Plot sources & signals
-fig, ax = plt.subplots(1, 1, figsize=[18, 5])
-ax.plot(ns, S, lw=5)
-ax.set_xticks([])
-ax.set_yticks([-1, 1])
-ax.set_xlim(ns[0], ns[200])
-ax.tick_params(labelsize=12)
-ax.set_title('Independent sources', fontsize=25)
-
-fig, ax = plt.subplots(3, 1, figsize=[18, 5], sharex=True)
-ax[0].plot(ns, X[0], lw=5)
-ax[0].set_title('Mixed signals', fontsize=25)
-ax[0].tick_params(labelsize=12)
-
-ax[1].plot(ns, X[1], lw=5)
-ax[1].tick_params(labelsize=12)
-ax[1].set_xlim(ns[0], ns[-1])
-
-ax[2].plot(ns, X[2], lw=5)
-ax[2].tick_params(labelsize=12)
-ax[2].set_xlim(ns[0], ns[-1])
-ax[2].set_xlabel('Sample number', fontsize=20)
-ax[2].set_xlim(ns[0], ns[200])
-
-plt.show()
+# fig, ax = plt.subplots(1, 1, figsize=[18, 5])
+# ax.plot(ns, S, lw=5)
+# ax.set_xticks([])
+# ax.set_yticks([-1, 1])
+# ax.set_xlim(ns[0], ns[200])
+# ax.tick_params(labelsize=12)
+# ax.set_title('Independent sources', fontsize=25)
+#
+# fig, ax = plt.subplots(3, 1, figsize=[18, 5], sharex=True)
+# ax[0].plot(ns, X[0], lw=5)
+# ax[0].set_title('Mixed signals', fontsize=25)
+# ax[0].tick_params(labelsize=12)
+#
+# ax[1].plot(ns, X[1], lw=5)
+# ax[1].tick_params(labelsize=12)
+# ax[1].set_xlim(ns[0], ns[-1])
+#
+# ax[2].plot(ns, X[2], lw=5)
+# ax[2].tick_params(labelsize=12)
+# ax[2].set_xlim(ns[0], ns[-1])
+# ax[2].set_xlabel('Sample number', fontsize=20)
+# ax[2].set_xlim(ns[0], ns[200])
+#
+# plt.show()
 
 def center(x):
     mean = np.mean(x, axis=1, keepdims=True)
-    print(mean)
     centered =  x - mean
     return centered, mean
 
 def covariance(x):
     mean = np.mean(x, axis=1, keepdims=True)
-    print(mean)
     n = np.shape(x)[1] - 1
     m = x - mean
 
@@ -67,14 +65,19 @@ def whiten(X):
     # Calculate the covariance matrix
     coVarM = covariance(X)
 
-    # Single value decoposition
-    U, S, V = np.linalg.svd(coVarM)
+    # # Single value decoposition
+    # U, S, V = np.linalg.svd(coVarM)
+    #
+    # # Calculate diagonal matrix of eigenvalues
+    # d = np.diag(1.0 / np.sqrt(S))
+    #
+    # # Calculate whitening matrix
+    # whiteM = np.dot(U, np.dot(d, U.T))
 
-    # Calculate diagonal matrix of eigenvalues
-    d = np.diag(1.0 / np.sqrt(S))
+    d, E = np.linalg.eig(coVarM)
+    whiteM = E @ np.diag(1 / np.sqrt(d)) @ E.T
 
-    # Calculate whitening matrix
-    whiteM = np.dot(U, np.dot(d, U.T))
+    # whiteM = np.diag(1 / np.sqrt(d + 1E-18)) @ E.T
 
     # Project onto whitening matrix
     Xw = np.dot(whiteM, X)
@@ -86,11 +89,12 @@ def fastIca(signals, alpha=1, thresh=1e-8, iterations=5000):
     m, n = signals.shape
 
     # Initialize random weights
-    W = np.random.rand(m, m)
+    t = 3
+    W = np.random.rand(t, m)
 
-    for c in range(m):
+    for c in range(t):
         w = W[c, :].copy().reshape(m, 1)
-        w = w / np.sqrt((w ** 2).sum())
+        w = w / np.linalg.norm(w, keepdims=True)
 
         i = 0
         lim = 100
@@ -131,12 +135,20 @@ Xw, whiteM = whiten(Xc)
 print(np.round(covariance(Xw)))
 
 W = fastIca(Xw,  alpha=1)
+print(W)
 
-#Un-mix signals using
-unMixed = Xw.T.dot(W.T)
+from ica import ICA
 
-# Subtract mean
-unMixed = (unMixed.T - meanX).T
+filter = ICA(3)
+filter.fit(X)
+# W = filter.W
+# Xw = filter.x_wht
+
+W = filter.fastIca(Xw,  alpha=1)
+unMixed = (W @ Xw).T
+print(W)
+
+# unMixed = (unMixed - meanX).T
 
 # Plot input signals (not mixed)
 fig, ax = plt.subplots(1, 1, figsize=[18, 5])
