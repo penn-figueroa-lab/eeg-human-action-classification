@@ -24,7 +24,7 @@ from cca import CCA
 
 filter = CCA()
 unMixed = filter.fit(X).T
-filter.exclude = []
+filter.exclude = [2]
 Filtered = filter.apply(X).T
 
 fig, axs = plt.subplots(4, 1, figsize=[18, 20])
