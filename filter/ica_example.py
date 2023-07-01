@@ -1,10 +1,8 @@
-import pandas as pd
 import numpy as np
 from scipy import signal
 import matplotlib.pyplot as plt
 
-# Set a seed for the random number generator for reproducibility
-np.random.seed(23)
+np.random.seed(22)
 
 # Number of samples
 ns = np.linspace(0, 200, 1000)
@@ -22,147 +20,37 @@ A = np.array([[0.5, 1, 0.2],
 # Mixed signal matrix
 X = S.dot(A).T
 
-# Plot sources & signals
-# fig, ax = plt.subplots(1, 1, figsize=[18, 5])
-# ax.plot(ns, S, lw=5)
-# ax.set_xticks([])
-# ax.set_yticks([-1, 1])
-# ax.set_xlim(ns[0], ns[200])
-# ax.tick_params(labelsize=12)
-# ax.set_title('Independent sources', fontsize=25)
-#
-# fig, ax = plt.subplots(3, 1, figsize=[18, 5], sharex=True)
-# ax[0].plot(ns, X[0], lw=5)
-# ax[0].set_title('Mixed signals', fontsize=25)
-# ax[0].tick_params(labelsize=12)
-#
-# ax[1].plot(ns, X[1], lw=5)
-# ax[1].tick_params(labelsize=12)
-# ax[1].set_xlim(ns[0], ns[-1])
-#
-# ax[2].plot(ns, X[2], lw=5)
-# ax[2].tick_params(labelsize=12)
-# ax[2].set_xlim(ns[0], ns[-1])
-# ax[2].set_xlabel('Sample number', fontsize=20)
-# ax[2].set_xlim(ns[0], ns[200])
-#
-# plt.show()
-
-def center(x):
-    mean = np.mean(x, axis=1, keepdims=True)
-    centered =  x - mean
-    return centered, mean
-
-def covariance(x):
-    mean = np.mean(x, axis=1, keepdims=True)
-    n = np.shape(x)[1] - 1
-    m = x - mean
-
-    return (m.dot(m.T))/n
-
-
-def whiten(X):
-    # Calculate the covariance matrix
-    coVarM = covariance(X)
-
-    # # Single value decoposition
-    # U, S, V = np.linalg.svd(coVarM)
-    #
-    # # Calculate diagonal matrix of eigenvalues
-    # d = np.diag(1.0 / np.sqrt(S))
-    #
-    # # Calculate whitening matrix
-    # whiteM = np.dot(U, np.dot(d, U.T))
-
-    d, E = np.linalg.eig(coVarM)
-    whiteM = E @ np.diag(1 / np.sqrt(d)) @ E.T
-
-    # whiteM = np.diag(1 / np.sqrt(d + 1E-18)) @ E.T
-
-    # Project onto whitening matrix
-    Xw = np.dot(whiteM, X)
-
-    return Xw, whiteM
-
-
-def fastIca(signals, alpha=1, thresh=1e-8, iterations=5000):
-    m, n = signals.shape
-
-    # Initialize random weights
-    t = 3
-    W = np.random.rand(t, m)
-
-    for c in range(t):
-        w = W[c, :].copy().reshape(m, 1)
-        w = w / np.linalg.norm(w, keepdims=True)
-
-        i = 0
-        lim = 100
-        while (lim > thresh) & (i < iterations):
-            # Dot product of weight and signal
-            ws = np.dot(w.T, signals)
-
-            # Pass w*s into contrast function g
-            wg = np.tanh(ws * alpha).T
-
-            # Pass w*s into g prime
-            wg_ = (1 - np.square(np.tanh(ws))) * alpha
-
-            # Update weights
-            wNew = (signals * wg.T).mean(axis=1) - wg_.mean() * w.squeeze()
-
-            # Decorrelate weights
-            wNew = wNew - np.dot(np.dot(wNew, W[:c].T), W[:c])
-            wNew = wNew / np.sqrt((wNew ** 2).sum())
-
-            # Calculate limit condition
-            lim = np.abs(np.abs((wNew * w).sum()) - 1)
-
-            # Update weights
-            w = wNew
-
-            # Update counter
-            i += 1
-
-        W[c, :] = w.T
-    return W
-
-# Center signals
-Xc, meanX = center(X)
-
-# Whiten mixed signals
-Xw, whiteM = whiten(Xc)
-print(np.round(covariance(Xw)))
-
-W = fastIca(Xw,  alpha=1)
-print(W)
-
 from ica import ICA
 
-filter = ICA(3)
-filter.fit(X)
-# W = filter.W
-# Xw = filter.x_wht
+n_components = 3
+filter = ICA(n_components)
+unMixed = filter.fit(X).T
+filter.exclude = [2]
+Filtered = filter.apply(X).T
 
-W = filter.fastIca(Xw,  alpha=1)
-unMixed = (W @ Xw).T
-print(W)
+fig, axs = plt.subplots(4, 1, figsize=[18, 20])
+axs[0].plot(S, lw=5)
+axs[0].tick_params(labelsize=12)
+axs[0].set_yticks([-1, 1])
+axs[0].set_title(r'Source signals ($S$)')
+axs[0].set_xlim(0, 100)
 
-# unMixed = (unMixed - meanX).T
+axs[1].plot(X.T, lw=5)
+axs[1].tick_params(labelsize=12)
+axs[1].set_yticks([-1, 1])
+axs[1].set_title(r'Mixed signals ($X$)')
+axs[1].set_xlim(0, 100)
 
-# Plot input signals (not mixed)
-fig, ax = plt.subplots(1, 1, figsize=[18, 5])
-ax.plot(S, lw=5)
-ax.tick_params(labelsize=12)
-ax.set_xticks([])
-ax.set_yticks([-1, 1])
-ax.set_title('Source signals', fontsize=25)
-ax.set_xlim(0, 100)
+axs[2].plot(unMixed, lw=5)
+axs[2].tick_params(labelsize=12)
+axs[2].set_yticks([-1, 1])
+axs[2].set_title(r'Unmixed signals ($WX$)')
+axs[2].set_xlim(0, 100)
 
-fig, ax = plt.subplots(1, 1, figsize=[18, 5])
-ax.plot(unMixed, '--', label='Recovered signals', lw=5)
-ax.set_xlabel('Sample number', fontsize=20)
-ax.set_title('Recovered signals', fontsize=25)
-ax.set_xlim(0, 100)
+axs[3].plot(Filtered, lw=5)
+axs[3].tick_params(labelsize=12)
+axs[3].set_yticks([-1, 1])
+axs[3].set_title(r'Filtered signals ($W^{-1}S$)')
+axs[3].set_xlim(0, 100)
 
 plt.show()

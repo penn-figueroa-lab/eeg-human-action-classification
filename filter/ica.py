@@ -1,4 +1,3 @@
-import numpy
 import numpy as np
 
 
@@ -10,6 +9,8 @@ class ICA:
         self.Wht = None
         self.Wht_inv = None
         self.W = None
+        self.W_inv = None
+        self.exclude = []
 
     def whitening(self, x):
         n, m = x.shape
@@ -24,79 +25,26 @@ class ICA:
     def fit(self, x, thresh=1e-8, iterations=5000):
         n, m = x.shape
         self.whitening(x)
-        self.W = np.random.rand(self.n_components, n)
+        self.W = np.ones((self.n_components, n)) / np.sqrt(n)
 
         for c in range(self.n_components):
-            w = self.W[c, :].copy().reshape(n, 1)
-            w = w / np.linalg.norm(w, keepdims=True)
-
             i = 0
             lim = 100
             while (lim > thresh) & (i < iterations):
-                # Dot product of weight and signal
-                ws = np.dot(w.T, self.x_wht)
-
-                # Pass w*s into contrast function g
-                wg = np.tanh(ws).T
-
-                # Pass w*s into g prime
-                wg_ = (1 - np.square(np.tanh(ws)))
-
-                # Update weights
-                wNew = (self.x_wht * wg.T).mean(axis=1) - wg_.mean() * w.squeeze()
-
-                # Decorrelate weights
-                wNew = wNew - np.dot(np.dot(wNew, self.W[:c].T), self.W[:c])
-                wNew = wNew / np.sqrt((wNew ** 2).sum())
-
-                # Calculate limit condition
-                lim = np.abs(np.abs((wNew * w).sum()) - 1)
-
-                # Update weights
-                w = wNew
-
-                # Update counter
+                wx = np.tanh(self.W[c, :].reshape(1, n) @ self.x_wht)
+                wn = (self.x_wht * wx).mean(axis=1) - (1 - wx ** 2).mean() * self.W[c, :]
+                wn = wn - wn @ self.W[:c].T @ self.W[:c]
+                wn = wn / np.linalg.norm(wn, keepdims=True)
+                lim = np.abs(np.abs((wn * self.W[c, :]).sum()) - 1)
+                self.W[c, :] = wn
                 i += 1
 
-            self.W[c, :] = w.T
+        self.W_inv = np.linalg.pinv(self.W)
+        return self.W @ self.x_wht
 
-    def fastIca(self, x, alpha=1, thresh=1e-8, iterations=5000):
-        n, m = x.shape
-
-        # Initialize random weights
-        W = np.random.rand(self.n_components, n)
-
-        for c in range(self.n_components):
-            w = W[c, :].copy().reshape(n, 1)
-            w = w / np.linalg.norm(w, keepdims=True)
-
-            i = 0
-            lim = 100
-            while (lim > thresh) & (i < iterations):
-                # Dot product of weight and signal
-                ws = np.dot(w.T, x)
-
-                # Pass w*s into contrast function g
-                wg = np.tanh(ws * alpha).T
-
-                # Pass w*s into g prime
-                wg_ = (1 - np.square(np.tanh(ws))) * alpha
-
-                # Update weights
-                wNew = (x * wg.T).mean(axis=1) - wg_.mean() * w.squeeze()
-
-                # Decorrelate weights
-                wNew = wNew - np.dot(np.dot(wNew, W[:c].T), W[:c])
-                wNew = wNew / np.sqrt((wNew ** 2).sum())
-
-                # Calculate limit condition
-                lim = np.abs(np.abs((wNew * w).sum()) - 1)
-
-                # Update weights
-                w = wNew
-
-                # Update counter
-                i += 1
-
-            W[c, :] = w.T
-        return W
+    def apply(self, x=None):
+        if x is not None:
+            self.whitening(x)
+        W_inv = self.W_inv.copy()
+        W_inv[:, self.exclude] = 0
+        return (self.Wht_inv @ (W_inv @ (self.W @ self.x_wht))) + self.x_mean
