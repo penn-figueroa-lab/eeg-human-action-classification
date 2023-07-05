@@ -53,4 +53,5 @@ axs[3].set_yticks([-1, 1])
 axs[3].set_title(r'Filtered signals ($W^{-1}S$)')
 axs[3].set_xlim(0, 100)
 
+fig.suptitle('ICA results', fontsize=30)
 plt.show()
