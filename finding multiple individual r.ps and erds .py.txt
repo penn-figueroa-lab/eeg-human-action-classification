@@ -1,0 +1,139 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[3]:
+
+
+import numpy as np
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import mne
+
+
+# In[4]:
+
+
+from mne.datasets import eegbci
+annot = ['T1','T2','T0']
+
+
+# In[32]:
+
+
+subject_n=int(input('What subject number do you want? Subject number ranges from 1 to 119'))
+recording_n=int(input('Which recording to you want? Recording range is only 3,7,11' ))
+raw=mne.io.read_raw_edf(f'C:/Users/Miska/mne_data/MNE-eegbci-data/files/eegmmidb/1.0.0/S{subject_n:03d}/S{subject_n:03d}R{recording_n:02d}.edf')
+ica = mne.preprocessing.ICA(n_components=20, random_state=97, max_iter=800) 
+ica.fit(raw)
+event_from_ann, event_dict = mne.events_from_annotations(raw) #we have T0, T1 and T2
+print(event_dict)
+print(event_from_ann)
+
+
+# In[40]:
+
+
+fist=1
+Input=False
+while Input==False:
+    choice=input( 'Which fist moevement would you like to observe? Right or Left?').lower()
+    if choice=='right':
+        fist=3
+        Input=True
+    elif choice=='left':
+        fist=2
+        Input=True
+    else:
+        Input=False
+    
+events= mne.pick_events(event_from_ann,include=fist)
+print(events)
+
+
+# In[47]:
+
+
+beforeT=float(input('How long would you like to have before the motion onset?'))
+if fist==2:
+    event_id=dict(T1=2)
+else:
+    event_id=dict(T2=3)
+epoch=mne.Epochs(raw,events,event_id=event_id, tmin=-beforeT,tmax=2)
+sfreq= epoch.info['sfreq']
+print(epoch.get_data())
+print(sfreq)
+
+
+
+# In[48]:
+
+
+n_of_t_points=(epoch.get_data().shape[2])#this shows the number of the 3rd column in the epoch array which shows seconds*sfreq(160 usally)
+print(n_of_t_points)
+epoch_voltages=[]
+sample_number=[]
+seconds=[]
+for time_point in range(0,n_of_t_points):
+    average_v=np.mean(epoch.get_data()[0,:,time_point])#.max()-epoch.get_data()[0,:,time_point].min()                                                            #epoch.get_data()[0,:,time_point].max()-epoch.get_data()[0,:,time_point].min()
+    epoch_voltages.append(average_v)
+    sample_number.append(time_point+1)
+    seconds.append(-(beforeT-time_point/sfreq))
+fig,ax =plt.subplots()
+ax.plot(seconds,epoch_voltages)
+ax.set_xlabel('seconds')
+ax.set_ylabel('Volatge/μV')
+plt.show()
+
+
+# In[1]:
+
+
+from mne.time_frequency import tfr_morlet
+
+
+# In[49]:
+
+
+epoch.compute_psd(fmin=2,fmax=40).plot(average=True)
+
+
+# In[50]:
+
+
+freqs=np.logspace(*np.log10([8,25]),num=8)
+n_cycles=freqs/2
+power,itc= tfr_morlet(epoch, freqs=freqs, n_cycles=n_cycles, use_fft=True, return_itc=True)
+
+
+# In[51]:
+
+
+info=epoch.info 
+channel_names=info['ch_names']
+print(channel_names)
+
+
+# In[52]:
+
+
+ch_for_tfr=input('Would you like to see another channel alonside the channel for Fc3 and Fc4? Make sure to have 4 characters and put a . for each character not needed(exp Fc3 is Fc3.)')
+if ch_for_tfr!='no':
+    info=epoch.info
+    channel_names=info['ch_names']
+    ch_num=channel_names.index(ch_for_tfr)
+    power.plot([ch_num],baseline=(-0.5,0),mode='logratio',title=ch_for_tfr)
+power.plot([2],baseline=(-0.5,0),mode='logratio',title='left Primary Somatosensory Area at Fc3 ')
+power.plot([6],baseline=(-0.5,0),mode='logratio',title='right Primary Somatosensory Area at Fc4 ')
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
