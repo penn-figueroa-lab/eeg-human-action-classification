@@ -1,29 +1,21 @@
+import fcwt
 import numpy as np
 import matplotlib.pyplot as plt
-from ssqueezepy.experimental import scale_to_freq
 
+# Initialize
+fs = 1000
+n = fs * 1  # 100 seconds
+ts = np.arange(n)
 
-# %%# Define signal ####################################
-N = 2048
-t = np.linspace(0, 10, N, endpoint=False)
-xo = np.cos(2 * np.pi * 2 * (np.exp(t / 2.2) - 1))
-xo += xo[::-1]  # add self reflected
-x = xo + np.sqrt(2) * np.random.randn(N)  # add noise
+# Generate linear chirp
+signal = np.sin(2 * np.pi * ((1 + (20 * ts) / n) * (ts / fs)))
 
-plt.plot(xo)
+f0 = .1  # lowest frequency
+f1 = 201  # highest frequency
+fn = 500  # number of frequencies
+
+#Calculate CWT without plotting...
+freqs, out = fcwt.cwt(signal, fs, f0, f1, fn)
+
+plt.imshow(out.real)
 plt.show()
-plt.plot(x)
-plt.show()
-
-# %%# With units #######################################
-from ssqueezepy import Wavelet, cwt, imshow, icwt
-
-fs = 400
-t = np.linspace(0, N / fs, N)
-wavelet = Wavelet()
-Wx, scales = cwt(x, wavelet)
-
-freqs_cwt = scale_to_freq(scales, wavelet, len(x), fs=fs)
-
-ikw = dict(abs=1, xticks=t, xlabel="Time [sec]", ylabel="Frequency [Hz]")
-imshow(Wx, **ikw, yticks=freqs_cwt)
