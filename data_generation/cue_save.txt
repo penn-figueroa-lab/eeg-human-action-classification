@@ -1,0 +1,88 @@
+if file_name == '001':
+        cues = [[0, 60]]
+    elif file_name == '002':
+        cues = [[0, 60]]
+    elif file_name == '003':
+        cues = [[0, 60]]
+    elif file_name == '004':
+        cues = [[0, 60]]
+    elif file_name == '005':
+        cues = [[0, 60]]
+    elif file_name == '006':
+        cues = [[0, 60]]
+    elif file_name == '007':
+        cues = [[0, 60]]
+    elif file_name == '008':
+        cues = [[0, 60]]
+    elif file_name == '100':
+        random_sequence = [2, 3, 4] * 20
+        random.shuffle(random_sequence)
+        cues = [[0, 10]]
+        for i in random_sequence:
+            cues += [[1, 2], [i, 2]]
+    elif file_name == '101':
+        random_sequence = [2, 3, 4] * 20
+        random.shuffle(random_sequence)
+        cues = [[0, 10]]
+        for i in random_sequence:
+            cues += [[1, 2], [i, 4]]
+    elif file_name == '102':
+        random_sequence = [2, 3, 4] * 20
+        random.shuffle(random_sequence)
+        cues = [[0, 10]]
+        for i in random_sequence:
+            cues += [[1, 2], [i, 2]]
+    elif file_name == '200':
+        random_sequence = [5, 6, 7] * 20
+        random.shuffle(random_sequence)
+        cues = [[0, 10]]
+        for i in random_sequence:
+            cues += [[1, 2], [i, 2]]
+    elif file_name == '201':
+        random_sequence = [5, 6, 7] * 20
+        random.shuffle(random_sequence)
+        cues = [[0, 10]]
+        for i in random_sequence:
+            cues += [[1, 2], [i, 4]]
+    elif file_name == '202':
+        random_sequence = [5, 6, 7] * 20
+        random.shuffle(random_sequence)
+        cues = [[0, 10]]
+        for i in random_sequence:
+            cues += [[1, 2], [i, 2]]
+    elif file_name == '300':
+        random_sequence = [8, 9, 10] * 20
+        random.shuffle(random_sequence)
+        cues = [[0, 10]]
+        for i in random_sequence:
+            cues += [[1, 2], [i, 2]]
+    elif file_name == '301':
+        random_sequence = [8, 9, 10] * 20
+        random.shuffle(random_sequence)
+        cues = [[0, 10]]
+        for i in random_sequence:
+            cues += [[1, 2], [i, 4]]
+    elif file_name == '302':
+        random_sequence = [8, 9, 10] * 20
+        random.shuffle(random_sequence)
+        cues = [[0, 10]]
+        for i in random_sequence:
+            cues += [[1, 2], [i, 2]]
+    elif file_name == '400':
+        random_sequence = [11, 12, 13] * 20
+        random.shuffle(random_sequence)
+        cues = [[0, 10]]
+        for i in random_sequence:
+            cues += [[1, 2], [i, 2]]
+    elif file_name == '401':
+        random_sequence = [11, 12, 13] * 20
+        random.shuffle(random_sequence)
+        cues = [[0, 10]]
+        for i in random_sequence:
+            cues += [[1, 2], [i, 4]]
+    elif file_name == '402':
+        random_sequence = [11, 12, 13] * 20
+        random.shuffle(random_sequence)
+        cues = [[0, 10]]
+        for i in random_sequence:
+            cues += [[1, 2], [i, 2]]
