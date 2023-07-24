@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- LOGGING -->
+  <include file="$(find natnet_ros_cpp)/launch/natnet_ros.launch" />
+
+  <node pkg="eeg_data_recording" type="eeg_udp_node.py" name="eeg_udp_node.py" output="screen" ></node>
+  <node pkg="eeg_data_recording" type="webcam_ros_node.py" name="webcam_ros_node.py" output="screen" ></node>
+  <node pkg="eeg_data_recording" type="recording_gui_node.py" name="recording_gui_node.py" output="screen" ></node>
+  
+</launch>
