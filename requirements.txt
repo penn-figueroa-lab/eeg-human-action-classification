@@ -1,0 +1,6 @@
+numpy>=1.23.5
+scipy>=1.10.1
+matplotlib>=3.7.1
+scikit-learn>=1.2.2
+tqdm>=4.65.0
+future>=0.18.3
