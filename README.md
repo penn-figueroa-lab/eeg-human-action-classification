@@ -19,7 +19,12 @@ pip install -r requirements.txt
 
 ### Usage
 
-1.
+1. EEG action classification:
+
+Download the datasets under `data` folder from the [link](). Run the script to process EEG data and classify hand movements:
+```bash
+python ./scripts/train.py
+```
 
 2. EEG UDP ROS node for [Bittium NeurOne](https://www.bittium.com/medical/bittium-neurone)
 To run the EEG UDP ROS node for Bittium NeurOne, use the following command:
